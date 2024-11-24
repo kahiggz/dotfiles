@@ -43,15 +43,14 @@ Welcome to the dotfiles repository! Follow these simple steps to set up your env
 Follow the installation instructions from TPM’s [GitHub page](https://github.com/tmux-plugins/tpm).
 
 ## Setting Up TMUX
-
-1. Launch TMUX and install the plugins:
+1. source the TMUX configuration manually:
+   ```bash
+   # tmux source ~/.config/tmux/tmux.conf
+2. Launch TMUX and install the plugins:
 
    ```bash
    # Inside TMUX, press:
    Ctrl + A, then I
-If you encounter any issues, source the TMUX configuration manually:
-tmux source-file ~/.tmux.conf
-
 🎉 You’re All Set!
 
 Enjoy your customized development environment! If you run into any issues, feel free to open an issue in the repository or check the documentation.
