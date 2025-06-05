@@ -6,12 +6,11 @@ return {
     keys = { { "<leader>cm", "<cmd>Mason<cr>", desc = "Mason" } },
     build = ":MasonUpdate",
     opts = {
-
       ensure_installed = {
         "lua-language-server",
         "stylua",
         "angular-language-server",
-        "typescript-language-server", -- ✅ correct tool name for Mason
+        "typescript-language-server",
         "css-lsp",
         "html-lsp",
         "eslint-lsp",
@@ -40,60 +39,73 @@ return {
       { "hrsh7th/cmp-nvim-lsp" },
     },
     config = function()
+      -- Disable preview window in completion
+      vim.opt.completeopt = { "menu", "menuone", "noselect" }
+      
+      -- Override default definition handler to prevent preview window
+      vim.lsp.handlers["textDocument/definition"] = function(_, result)
+        if not result or vim.tbl_isempty(result) then
+          return nil
+        end
+        
+        if vim.tbl_islist(result) then
+          -- Multiple results, use first one
+          local uri = result[1].uri or result[1].targetUri
+          local range = result[1].range or result[1].targetSelectionRange
+          
+          local target_filename = vim.uri_to_fname(uri)
+          vim.cmd("edit " .. vim.fn.fnameescape(target_filename))
+          vim.api.nvim_win_set_cursor(0, {
+            range.start.line + 1,
+            range.start.character
+          })
+        else
+          -- Single result
+          local uri = result.uri or result.targetUri
+          local range = result.range or result.targetSelectionRange
+          
+          local target_filename = vim.uri_to_fname(uri)
+          vim.cmd("edit " .. vim.fn.fnameescape(target_filename))
+          vim.api.nvim_win_set_cursor(0, {
+            range.start.line + 1,
+            range.start.character
+          })
+        end
+      end
+      
+      -- Use standard capabilities
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      
       local lspconfig = require("lspconfig")
-      local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-      -- Setup LSP servers
-      require("mason-lspconfig").setup_handlers({
-        -- Default handler for all servers
-        function(server_name)
-          lspconfig[server_name].setup({
-            capabilities = capabilities,
-          })
-        end,
-
-        -- Lua-specific configuration
-        ["lua_ls"] = function()
-          lspconfig.lua_ls.setup({
-            capabilities = capabilities,
-            settings = {
-              Lua = {
-                diagnostics = {
-                  globals = { "vim" },
-                },
-              },
+      -- Setup the servers directly
+      lspconfig.lua_ls.setup({
+        capabilities = capabilities,
+        settings = {
+          Lua = {
+            diagnostics = {
+              globals = { "vim" },
             },
-          })
-        end,
+          },
+        },
+      })
 
-        -- Angular-specific configuration
-        ["angularls"] = function()
-          lspconfig.angularls.setup({
-            capabilities = capabilities,
-            root_dir = lspconfig.util.root_pattern("angular.json", "project.json"),
-          })
-        end,
+      lspconfig.angularls.setup({
+        capabilities = capabilities,
+        root_dir = lspconfig.util.root_pattern("angular.json", "project.json"),
+      })
 
-        -- TypeScript configuration
+      lspconfig.tsserver.setup({
+        capabilities = capabilities,
+        filetypes = { "typescript", "typescriptreact", "typescript.tsx" },
+        root_dir = lspconfig.util.root_pattern("tsconfig.json", "package.json"),
+      })
 
-        ["ts_ls"] = function()
-          lspconfig.tsserver.setup({
-            capabilities = capabilities,
-            filetypes = { "typescript", "typescriptreact", "typescript.tsx" },
-            root_dir = lspconfig.util.root_pattern("tsconfig.json", "package.json"),
-          })
-        end,
+      lspconfig.cssls.setup({
+        capabilities = capabilities,
+        filetypes = { "css", "scss", "less" },
+      })
 
-        -- CSS configuration
-        ["cssls"] = function()
-          lspconfig.cssls.setup({
-            capabilities = capabilities,
-            filetypes = { "css", "scss", "less" },
-          })
-        end,
-
-        -- ESLint configuration
-        ["eslint"] = function()
           lspconfig.eslint.setup({
             capabilities = capabilities,
             filetypes = {
@@ -125,8 +137,6 @@ return {
               validate = "on",
             },
           })
-        end,
-      })
 
       -- Setup key mappings for LSP functions
       vim.api.nvim_create_autocmd("LspAttach", {

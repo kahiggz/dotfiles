@@ -1,29 +1,3 @@
-# Copyright (c) 2010 Aldo Cortesi
-# Copyright (c) 2010, 2014 dequis
-# Copyright (c) 2012 Randall Ma
-# Copyright (c) 2012-2014 Tycho Andersen
-# Copyright (c) 2012 Craig Barnes
-# Copyright (c) 2013 horsik
-# Copyright (c) 2013 Tao Sauvage
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
 import os
 import subprocess
 from libqtile import bar, extension, hook, layout, qtile, widget
@@ -56,6 +30,29 @@ def maximize_by_switching_layout(qtile):
         qtile.current_group.layout = 'max'
     elif current_layout_name == 'max':
         qtile.current_group.layout = 'monadtall'
+
+
+def switch_to_group_on_monitor(qtile, group_name):
+    """Switch to group on the appropriate monitor based on group number"""
+    group_num = int(group_name) if group_name.isdigit() else (10 if group_name == "0" else None)
+    
+    if group_num is None:
+        qtile.groups_map[group_name].cmd_toscreen()
+        return
+    
+    # Groups 1-4 go to monitor 0 (first monitor)
+    # Groups 5-9 and 0 go to monitor 1 (second monitor)
+    if group_num in [1, 2, 3, 4]:
+        target_screen = 0
+    else:  # groups 5, 6, 7, 8, 9, 0
+        target_screen = 1
+    
+    # Make sure we don't exceed available screens
+    if target_screen < len(qtile.screens):
+        qtile.focus_screen(target_screen)
+        qtile.groups_map[group_name].cmd_toscreen()
+    else:
+        qtile.groups_map[group_name].cmd_toscreen()
 
 keys = [
     # The essentials
@@ -141,26 +138,47 @@ keys = [
     # Switch focus of monitors
     Key([mod], "period", lazy.next_screen(), desc='Move focus to next monitor'),
     Key([mod], "comma", lazy.prev_screen(), desc='Move focus to prev monitor'),
-    
+    # Add this single line to your keys list (not a KeyChord):
+    Key([mod], "x", lazy.spawn("notify-send 'Test key works'"), desc="Test key"),
     # Dmenu/rofi scripts launched using the key chord SUPER+p followed by 'key'
-    KeyChord([mod], "p", [
-        Key([], "h", lazy.spawn("dm-hub -r"), desc='List all dmscripts'),
-        Key([], "a", lazy.spawn("dm-sounds -r"), desc='Choose ambient sound'),
-        Key([], "b", lazy.spawn("dm-setbg -r"), desc='Set background'),
-        Key([], "c", lazy.spawn("dtos-colorscheme -r"), desc='Choose color scheme'),
-        Key([], "e", lazy.spawn("dm-confedit -r"), desc='Choose a config file to edit'),
-        Key([], "i", lazy.spawn("dm-maim -r"), desc='Take a screenshot'),
-        Key([], "k", lazy.spawn("dm-kill -r"), desc='Kill processes '),
-        Key([], "m", lazy.spawn("dm-man -r"), desc='View manpages'),
-        Key([], "n", lazy.spawn("dm-note -r"), desc='Store and copy notes'),
-        Key([], "o", lazy.spawn("dm-bookman -r"), desc='Browser bookmarks'),
-        Key([], "p", lazy.spawn("rofi-pass"), desc='Password menu'),
-        Key([], "q", lazy.spawn("dm-logout -r"), desc='Logout menu'),
-        Key([], "r", lazy.spawn("dm-radio -r"), desc='Listen to online radio'),
-        Key([], "s", lazy.spawn("dm-websearch -r"), desc='Search various engines'),
-        Key([], "t", lazy.spawn("dm-translate -r"), desc='Translate text'),
-        Key([], "u", lazy.spawn("dm-music -r"), desc='Toggle music mpc/mpd')
-    ])
+    #
+    #
+    # KeyChord([mod], "p", [
+    #     Key([], "h", lazy.spawn("dm-hub -r"), desc='List all dmscripts'),
+    #     Key([], "a", lazy.spawn("dm-sounds -r"), desc='Choose ambient sound'),
+    #     Key([], "b", lazy.spawn("dm-setbg -r"), desc='Set background'),
+    #     Key([], "c", lazy.spawn("dtos-colorscheme -r"), desc='Choose color scheme'),
+    #     Key([], "e", lazy.spawn("dm-confedit -r"), desc='Choose a config file to edit'),
+    #     Key([], "i", lazy.spawn("dm-maim -r"), desc='Take a screenshot'),
+    #     Key([], "k", lazy.spawn("dm-kill -r"), desc='Kill processes '),
+    #     Key([], "m", lazy.spawn("dm-man -r"), desc='View manpages'),
+    #     Key([], "n", lazy.spawn("dm-note -r"), desc='Store and copy notes'),
+    #     Key([], "o", lazy.spawn("dm-bookman -r"), desc='Browser bookmarks'),
+    #     Key([], "p", lazy.spawn("rofi-pass"), desc='Password menu'),
+    #     Key([], "q", lazy.spawn("dm-logout -r"), desc='Logout menu'),
+    #     Key([], "r", lazy.spawn("dm-radio -r"), desc='Listen to online radio'),
+    #     Key([], "s", lazy.spawn("dm-websearch -r"), desc='Search various engines'),
+    #     Key([], "t", lazy.spawn("dm-translate -r"), desc='Translate text'),
+    #     Key([], "u", lazy.spawn("dm-music -r"), desc='Toggle music mpc/mpd'),
+    #     Key([], "x", lazy.spawn("notify-send 'P KeyChord works!'"), desc='Test')
+    # ]),
+# KeyChord([mod], "y", [
+#     Key([], "y", lazy.spawn("kitty"), desc='Test terminal'),
+# ]),
+    # KeyChord([mod], "z", [
+    #     Key([], "z", lazy.spawn("notify-send 'KeyChord works!'"), desc='Test KeyChord'),
+    # ]),
+KeyChord([mod], "p", [
+    Key([], "l", lazy.spawn("betterlockscreen -l"), desc='Lock screen'),
+    Key([], "t", lazy.spawn("kitty"), desc='Terminal'),
+    Key([], "b", lazy.spawn("brave"), desc='Browser'),
+    Key([], "f", lazy.spawn("pcmanfm"), desc='File manager'),
+    Key([], "r", lazy.spawn("rofi -show drun"), desc='App launcher'),
+    Key([], "w", lazy.spawn("rofi -show window"), desc='Window switcher'),
+    Key([], "s", lazy.spawn("flameshot gui"), desc='Screenshot'),
+    Key([], "v", lazy.spawn("pavucontrol"), desc='Volume control'),
+    Key([], "n", lazy.spawn("notify-send 'Qtile' 'KeyChord works!'"), desc='Test notification'),
+]),
 ]
 
 groups = []
@@ -185,11 +203,11 @@ for i in range(len(group_names)):
 for i in groups:
     keys.extend(
         [
-            # mod1 + letter of group = switch to group
+            # mod1 + letter of group = switch to group on appropriate monitor
             Key(
                 [mod],
                 i.name,
-                lazy.group[i.name].toscreen(),
+                lazy.function(lambda qtile, group_name=i.name: switch_to_group_on_monitor(qtile, group_name)),
                 desc="Switch to group {}".format(i.name),
             ),
             # mod1 + shift + letter of group = move focused window to group
@@ -448,6 +466,9 @@ floating_layout = layout.Floating(
         Match(title="tastytrade"),        # tastytrade pop-out side gutter
         Match(title="tastytrade - Portfolio Report"), # tastytrade pop-out allocation
         Match(wm_class="tasty.javafx.launcher.LauncherFxApp"), # tastytrade settings
+        Match(wm_class="slack"),          # Add this line
+        Match(wm_class="Slack"),          # Add this too (capital S)
+        Match(title="Slack call")
     ]
 )
 auto_fullscreen = True
