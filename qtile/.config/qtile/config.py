@@ -65,7 +65,8 @@ keys = [
     Key([mod, "shift"], "r", lazy.reload_config(), desc="Reload the config"),
     Key([mod, "shift"], "q", lazy.spawn("dm-logout -r"), desc="Logout menu"),
     Key([mod], "r", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
-    Key([mod, "shift"], "T", lazy.spawn("conky-toggle"), desc="Conky toggle on/off"),
+    Key([mod, "shift"], "T", lazy.spawn("conky-toggle"), desc="Conky toggle on/off"),# Replace line 42 with:
+    Key([mod, "shift"], "q", lazy.spawn("rofi -show power-menu -modi power-menu:rofi-power-menu"), desc="Logout menu"),
     
     # Switch between windows
     # Some layouts like 'monadtall' only need to use j/k to move
@@ -222,10 +223,10 @@ for i in groups:
 
 colors = colors.DoomOne
 
-layout_theme = {"border_width": 2,
-                "margin": 12,
+layout_theme = {"border_width": 0,
+                "margin": 8,
                 "border_focus": colors[8],
-                "border_normal": colors[0]
+                "border_normal": colors[1]
                 }
 
 layouts = [
@@ -486,6 +487,11 @@ wl_input_rules = None
 def start_once():
     home = os.path.expanduser('~')
     subprocess.call([home + '/.config/qtile/autostart.sh'])
+
+@hook.subscribe.startup_once
+def autostart():
+    subprocess.Popen(['gnome-keyring-daemon', '--start', '--components=secrets'])
+
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the

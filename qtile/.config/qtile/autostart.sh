@@ -30,3 +30,4 @@ nitrogen --restore &
 if [ ! -d "$HOME"/.cache/betterlockscreen/ ]; then
   betterlockscreen -u /usr/share/backgrounds/dtos-backgrounds/0277.jpg &
 fi
+gnome-keyring-daemon --start --components=secrets &
