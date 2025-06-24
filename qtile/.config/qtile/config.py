@@ -21,7 +21,7 @@ def minimize_all(qtile):
     for win in qtile.current_group.windows:
         if hasattr(win, "toggle_minimize"):
             win.toggle_minimize()
-           
+
 # A function for toggling between MAX and MONADTALL layouts
 @lazy.function
 def maximize_by_switching_layout(qtile):
@@ -35,18 +35,18 @@ def maximize_by_switching_layout(qtile):
 def switch_to_group_on_monitor(qtile, group_name):
     """Switch to group on the appropriate monitor based on group number"""
     group_num = int(group_name) if group_name.isdigit() else (10 if group_name == "0" else None)
-    
+
     if group_num is None:
         qtile.groups_map[group_name].cmd_toscreen()
         return
-    
+
     # Groups 1-4 go to monitor 0 (first monitor)
     # Groups 5-9 and 0 go to monitor 1 (second monitor)
     if group_num in [1, 2, 3, 4]:
         target_screen = 0
     else:  # groups 5, 6, 7, 8, 9, 0
         target_screen = 1
-    
+
     # Make sure we don't exceed available screens
     if target_screen < len(qtile.screens):
         qtile.focus_screen(target_screen)
@@ -67,7 +67,7 @@ keys = [
     Key([mod], "r", lazy.spawncmd(), desc="Spawn a command using a prompt widget"),
     Key([mod, "shift"], "T", lazy.spawn("conky-toggle"), desc="Conky toggle on/off"),# Replace line 42 with:
     Key([mod, "shift"], "q", lazy.spawn("rofi -show power-menu -modi power-menu:rofi-power-menu"), desc="Logout menu"),
-    
+
     # Switch between windows
     # Some layouts like 'monadtall' only need to use j/k to move
     # through the stack, but other layouts like 'columns' will
@@ -94,12 +94,12 @@ keys = [
         lazy.layout.shuffle_down(),
         lazy.layout.section_down().when(layout=["treetab"]),
         desc="Move window down/move down a section in treetab"
-    ),
+        ),
     Key([mod, "shift"], "k",
         lazy.layout.shuffle_up(),
         lazy.layout.section_up().when(layout=["treetab"]),
         desc="Move window downup/move up a section in treetab"
-    ),
+        ),
 
     # Toggle between split and unsplit sides of stack.
     # Split = all windows displayed
@@ -117,12 +117,12 @@ keys = [
         lazy.layout.grow_left().when(layout=["bsp", "columns"]),
         lazy.layout.grow().when(layout=["monadtall", "monadwide"]),
         desc="Grow window to the left"
-    ),
+        ),
     Key([mod], "minus",
         lazy.layout.grow_right().when(layout=["bsp", "columns"]),
         lazy.layout.shrink().when(layout=["monadtall", "monadwide"]),
         desc="Grow window to the left"
-    ),
+        ),
 
     # Grow windows up, down, left, right.  Only works in certain layouts.
     # Works in 'bsp' and 'columns' layout.
@@ -163,29 +163,29 @@ keys = [
     #     Key([], "u", lazy.spawn("dm-music -r"), desc='Toggle music mpc/mpd'),
     #     Key([], "x", lazy.spawn("notify-send 'P KeyChord works!'"), desc='Test')
     # ]),
-# KeyChord([mod], "y", [
-#     Key([], "y", lazy.spawn("kitty"), desc='Test terminal'),
-# ]),
+    # KeyChord([mod], "y", [
+    #     Key([], "y", lazy.spawn("kitty"), desc='Test terminal'),
+    # ]),
     # KeyChord([mod], "z", [
     #     Key([], "z", lazy.spawn("notify-send 'KeyChord works!'"), desc='Test KeyChord'),
     # ]),
-KeyChord([mod], "p", [
-    Key([], "l", lazy.spawn("betterlockscreen -l"), desc='Lock screen'),
-    Key([], "t", lazy.spawn("kitty"), desc='Terminal'),
-    Key([], "b", lazy.spawn("brave"), desc='Browser'),
-    Key([], "f", lazy.spawn("pcmanfm"), desc='File manager'),
-    Key([], "r", lazy.spawn("rofi -show drun"), desc='App launcher'),
-    Key([], "w", lazy.spawn("rofi -show window"), desc='Window switcher'),
-    Key([], "s", lazy.spawn("flameshot gui"), desc='Screenshot'),
-    Key([], "v", lazy.spawn("pavucontrol"), desc='Volume control'),
-    Key([], "n", lazy.spawn("notify-send 'Qtile' 'KeyChord works!'"), desc='Test notification'),
-]),
+    KeyChord([mod], "p", [
+        Key([], "l", lazy.spawn("betterlockscreen -l"), desc='Lock screen'),
+        Key([], "t", lazy.spawn("kitty"), desc='Terminal'),
+        Key([], "b", lazy.spawn("brave"), desc='Browser'),
+        Key([], "f", lazy.spawn("pcmanfm"), desc='File manager'),
+        Key([], "r", lazy.spawn("rofi -show drun"), desc='App launcher'),
+        Key([], "w", lazy.spawn("rofi -show window"), desc='Window switcher'),
+        Key([], "s", lazy.spawn("flameshot gui"), desc='Screenshot'),
+        Key([], "v", lazy.spawn("pavucontrol"), desc='Volume control'),
+        Key([], "n", lazy.spawn("notify-send 'Qtile' 'KeyChord works!'"), desc='Test notification'),
+    ]),
 ]
 
 groups = []
 group_names = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
 
-group_labels = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+group_labels = ["💻", "💬", "🚀", "🎵", "🦁", "👷", "🌮", "🎮", "🌙", "🔥"]
 #group_labels = ["DEV", "WWW", "SYS", "DOC", "VBOX", "CHAT", "MUS", "VID", "GFX", "MISC"]
 # group_labels = ["", "", "", "", "", "", "⧳", "", "", "⛨"]
 # group_labels = [" ", " ", " ", " ", " ", " ", "⛨ ", " ", " "]
@@ -200,7 +200,7 @@ for i in range(len(group_names)):
             layout=group_layouts[i].lower(),
             label=group_labels[i],
         ))
- 
+
 for i in groups:
     keys.extend(
         [
@@ -273,7 +273,6 @@ widget_defaults = dict(
 )
 
 extension_defaults = widget_defaults.copy()
-
 def init_widgets_list():
     widgets_list = [
         widget.Spacer(length = 8),
@@ -283,110 +282,222 @@ def init_widgets_list():
         #          mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn("qtilekeys-yad")},
         #          ),
         widget.Prompt(
-                 font = "Ubuntu Mono",
-                 fontsize=14,
-                 foreground = colors[1]
+            font = "Ubuntu Mono",
+            fontsize=14,
+            foreground = colors[1]
         ),
         widget.GroupBox(
-                 fontsize = 10,
-                 margin_y = 5,
-                 margin_x = 12,
-                 padding_y = 0,
-                 padding_x = 0,
-                 borderwidth = 3,
-                 active = colors[8],
-                 inactive = colors[9],
-                 rounded = False,
-                 highlight_color = colors[0],
-                 highlight_method = "line",
-                 this_current_screen_border = colors[7],
-                 this_screen_border = colors [4],
-                 other_current_screen_border = colors[7],
-                 other_screen_border = colors[4],
-                 ),
-        widget.TextBox(
-                 text = '|',
-                 font = "Ubuntu Mono",
-                 foreground = colors[9],
-                 padding = 2,
-                 fontsize = 14
-                 ),
-        widget.LaunchBar(
-                 progs = [("🦁", "brave", "Brave web browser"),
-                          ("🚀", "alacritty", "Alacritty terminal"),
-                          ("📁", "pcmanfm", "PCManFM file manager"),
-                          ("🎸", "vlc", "VLC media player")
-                         ], 
-                 fontsize = 10,
-                 padding = 10,
-                 foreground = colors[3],
+            fontsize = 10,
+            margin_y = 5,
+            margin_x = 12,
+            padding_y = 0,
+            padding_x = 0,
+            borderwidth = 3,
+            active = colors[8],
+            inactive = colors[9],
+            rounded = False,
+            highlight_color = colors[0],
+            highlight_method = "line",
+            this_current_screen_border = colors[7],
+            this_screen_border = colors [4],
+            other_current_screen_border = colors[7],
+            other_screen_border = colors[4],
         ),
         widget.TextBox(
-                 text = '|',
-                 font = "Ubuntu Mono",
-                 foreground = colors[9],
-                 padding = 2,
-                 fontsize = 14
-                 ),
-        widget.CurrentLayout(
-                 foreground = colors[1],
-                 padding = 5
-                 ),
+            text = '|',
+            font = "Ubuntu Mono",
+            foreground = colors[9],
+            padding = 2,
+            fontsize = 14
+        ),
+        # widget.LaunchBar(
+        #          progs = [("🦁", "brave", "Brave web browser"),
+        #                   ("🚀", "alacritty", "Alacritty terminal"),
+        #                   ("📁", "pcmanfm", "PCManFM file manager"),
+        #                   ("🎸", "vlc", "VLC media player")
+        #                  ], 
+        #          fontsize = 10,
+        #          padding = 10,
+        #          foreground = colors[3],
+        # ),
         widget.TextBox(
-                 text = '|',
-                 font = "Ubuntu Mono",
-                 foreground = colors[9],
-                 padding = 2,
-                 fontsize = 14
-                 ),
+            text = '|',
+            font = "Ubuntu Mono",
+            foreground = colors[9],
+            padding = 2,
+            fontsize = 14
+        ),
+        widget.CurrentLayout(
+            foreground = colors[1],
+            padding = 5
+        ),
+        widget.TextBox(
+            text = '|',
+            font = "Ubuntu Mono",
+            foreground = colors[9],
+            padding = 2,
+            fontsize = 14
+        ),
         widget.WindowName(
-                 foreground = colors[6],
-                 padding = 4,
-                 max_chars = 40
-                 ),
+            foreground = colors[6],
+            padding = 4,
+            max_chars = 40
+        ),
         widget.GenPollText(
-                 update_interval = 300,
-                 func = lambda: subprocess.check_output("printf $(uname -r)", shell=True, text=True),
-                 foreground = colors[3],
-                 padding = 6, 
-                 fmt = '❤  {}',
-                 ),
+            update_interval = 300,
+            func = lambda: subprocess.check_output("printf $(uname -r)", shell=True, text=True),
+            foreground = colors[3],
+            padding = 6, 
+            fmt = '❤  {}',
+        ),
         widget.CPU(
-                 format = '  Cpu: {load_percent}%',
-                 foreground = colors[4],
-                 padding = 6, 
-                 ),
+            format = '  Cpu: {load_percent}%',
+            foreground = colors[4],
+            padding = 6, 
+        ),
         widget.Memory(
-                 foreground = colors[8],
-                 padding = 6, 
-                 mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn(myTerm + ' -e htop')},
-                 format = '{MemUsed: .0f}{mm}',
-                 fmt = '🖥  Mem: {}',
-                 ),
+            foreground = colors[8],
+            padding = 6, 
+            mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn(myTerm + ' -e htop')},
+            format = '{MemUsed: .0f}{mm}',
+            fmt = '🖥  Mem: {}',
+        ),
         widget.Volume(
-                 foreground = colors[7],
-                 padding = 6, 
-                 fmt = '🕫  Vol: {}',
-                 ),
+            foreground = colors[7],
+            padding = 6, 
+            fmt = '🕫  Vol: {}',
+        ),
         widget.Clock(
-                 foreground = colors[8],
-                 padding = 6, 
-                 format = "⧗  %a, %b %d - %H:%M",
-                 ),
-        widget.Systray(padding = 3),
+            foreground = colors[8],
+            padding = 6, 
+            format = "⧗  %a, %b %d - %H:%M",
+        ),
         widget.Spacer(length = 8),
-        ]
+    ]
     return widgets_list
 
 def init_widgets_screen1():
     widgets_screen1 = init_widgets_list()
+    widgets_screen1.insert(-1, widget.Systray(padding = 3))
     return widgets_screen1 
 
-# All other monitors' bars will display everything but widgets 22 (systray) and 23 (spacer).
 def init_widgets_screen2():
     widgets_screen2 = init_widgets_list()
-    del widgets_screen2[16:17]
     return widgets_screen2
+
+# def init_widgets_list():
+#     widgets_list = [
+#         widget.Spacer(length = 8),
+#         # widget.Image(
+#         #          filename = "~/.config/qtile/icons/dt-icon.png",
+#         #          scale = "False",
+#         #          mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn("qtilekeys-yad")},
+#         #          ),
+#         widget.Prompt(
+#                  font = "Ubuntu Mono",
+#                  fontsize=14,
+#                  foreground = colors[1]
+#         ),
+#         widget.GroupBox(
+#                  fontsize = 10,
+#                  margin_y = 5,
+#                  margin_x = 12,
+#                  padding_y = 0,
+#                  padding_x = 0,
+#                  borderwidth = 3,
+#                  active = colors[8],
+#                  inactive = colors[9],
+#                  rounded = False,
+#                  highlight_color = colors[0],
+#                  highlight_method = "line",
+#                  this_current_screen_border = colors[7],
+#                  this_screen_border = colors [4],
+#                  other_current_screen_border = colors[7],
+#                  other_screen_border = colors[4],
+#                  ),
+#         widget.TextBox(
+#                  text = '|',
+#                  font = "Ubuntu Mono",
+#                  foreground = colors[9],
+#                  padding = 2,
+#                  fontsize = 14
+#                  ),
+#         # widget.LaunchBar(
+#         #          progs = [("🦁", "brave", "Brave web browser"),
+#         #                   ("🚀", "alacritty", "Alacritty terminal"),
+#         #                   ("📁", "pcmanfm", "PCManFM file manager"),
+#         #                   ("🎸", "vlc", "VLC media player")
+#         #                  ], 
+#         #          fontsize = 10,
+#         #          padding = 10,
+#         #          foreground = colors[3],
+#         # ),
+#         widget.TextBox(
+#                  text = '|',
+#                  font = "Ubuntu Mono",
+#                  foreground = colors[9],
+#                  padding = 2,
+#                  fontsize = 14
+#                  ),
+#         widget.CurrentLayout(
+#                  foreground = colors[1],
+#                  padding = 5
+#                  ),
+#         widget.TextBox(
+#                  text = '|',
+#                  font = "Ubuntu Mono",
+#                  foreground = colors[9],
+#                  padding = 2,
+#                  fontsize = 14
+#                  ),
+#         widget.WindowName(
+#                  foreground = colors[6],
+#                  padding = 4,
+#                  max_chars = 40
+#                  ),
+#         widget.GenPollText(
+#                  update_interval = 300,
+#                  func = lambda: subprocess.check_output("printf $(uname -r)", shell=True, text=True),
+#                  foreground = colors[3],
+#                  padding = 6, 
+#                  fmt = '❤  {}',
+#                  ),
+#         widget.CPU(
+#                  format = '  Cpu: {load_percent}%',
+#                  foreground = colors[4],
+#                  padding = 6, 
+#                  ),
+#         widget.Memory(
+#                  foreground = colors[8],
+#                  padding = 6, 
+#                  mouse_callbacks = {'Button1': lambda: qtile.cmd_spawn(myTerm + ' -e htop')},
+#                  format = '{MemUsed: .0f}{mm}',
+#                  fmt = '🖥  Mem: {}',
+#                  ),
+#         widget.Volume(
+#                  foreground = colors[7],
+#                  padding = 6, 
+#                  fmt = '🕫  Vol: {}',
+#                  ),
+#         widget.Clock(
+#                  foreground = colors[8],
+#                  padding = 6, 
+#                  format = "⧗  %a, %b %d - %H:%M",
+#                  ),
+#         widget.Systray(padding = 3),
+#         widget.Spacer(length = 8),
+#         ]
+#     return widgets_list
+#
+# def init_widgets_screen1():
+#     widgets_screen1 = init_widgets_list()
+#     return widgets_screen1 
+#
+# # All other monitors' bars will display everything but widgets 22 (systray) and 23 (spacer).
+# def init_widgets_screen2():
+#     widgets_screen2 = init_widgets_list()
+#     del widgets_screen2[16:17]
+#     return widgets_screen2
 
 # For adding transparency to your bar, add (background="#00000000") to the "Screen" line(s)
 # For ex: Screen(top=bar.Bar(widgets=init_widgets_screen2(), background="#00000000", size=24)),
