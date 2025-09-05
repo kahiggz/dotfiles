@@ -7,8 +7,7 @@ killall picom
 
 # Start Picom with the config file in the background
 picom --config ~/.config/picom/picom.conf --daemon &
-xrandr --output DisplayPort-0 --mode 2560x1440 --rate 165 &
-xrandr --output DisplayPort-1 --mode 1920x1200 &
+xrandr --output DisplayPort-0 --mode 3440x1440 --rate 165 &
 lxsession &
 
 dunst &

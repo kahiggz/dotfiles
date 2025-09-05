@@ -41,41 +41,41 @@ return {
     config = function()
       -- Disable preview window in completion
       vim.opt.completeopt = { "menu", "menuone", "noselect" }
-      
+
       -- Override default definition handler to prevent preview window
       vim.lsp.handlers["textDocument/definition"] = function(_, result)
         if not result or vim.tbl_isempty(result) then
           return nil
         end
-        
+
         if vim.tbl_islist(result) then
           -- Multiple results, use first one
           local uri = result[1].uri or result[1].targetUri
           local range = result[1].range or result[1].targetSelectionRange
-          
+
           local target_filename = vim.uri_to_fname(uri)
           vim.cmd("edit " .. vim.fn.fnameescape(target_filename))
           vim.api.nvim_win_set_cursor(0, {
             range.start.line + 1,
-            range.start.character
+            range.start.character,
           })
         else
           -- Single result
           local uri = result.uri or result.targetUri
           local range = result.range or result.targetSelectionRange
-          
+
           local target_filename = vim.uri_to_fname(uri)
           vim.cmd("edit " .. vim.fn.fnameescape(target_filename))
           vim.api.nvim_win_set_cursor(0, {
             range.start.line + 1,
-            range.start.character
+            range.start.character,
           })
         end
       end
-      
+
       -- Use standard capabilities
       local capabilities = vim.lsp.protocol.make_client_capabilities()
-      
+
       local lspconfig = require("lspconfig")
 
       -- Setup the servers directly
@@ -106,37 +106,37 @@ return {
         filetypes = { "css", "scss", "less" },
       })
 
-          lspconfig.eslint.setup({
-            capabilities = capabilities,
-            filetypes = {
-              "javascript",
-              "javascriptreact",
-              "javascript.jsx",
-              "typescript",
-              "typescriptreact",
-              "typescript.tsx",
-              "vue",
-              "html",
+      lspconfig.eslint.setup({
+        capabilities = capabilities,
+        filetypes = {
+          "javascript",
+          "javascriptreact",
+          "javascript.jsx",
+          "typescript",
+          "typescriptreact",
+          "typescript.tsx",
+          "vue",
+          "html",
+        },
+        settings = {
+          codeAction = {
+            disableRuleComment = {
+              enable = true,
+              location = "separateLine",
             },
-            settings = {
-              codeAction = {
-                disableRuleComment = {
-                  enable = true,
-                  location = "separateLine",
-                },
-                showDocumentation = {
-                  enable = true,
-                },
-              },
-              format = true,
-              onIgnoredFiles = "off",
-              problems = {
-                shortenToSingleLine = false,
-              },
-              run = "onType",
-              validate = "on",
+            showDocumentation = {
+              enable = true,
             },
-          })
+          },
+          format = true,
+          onIgnoredFiles = "off",
+          problems = {
+            shortenToSingleLine = false,
+          },
+          run = "onType",
+          validate = "on",
+        },
+      })
 
       -- Setup key mappings for LSP functions
       vim.api.nvim_create_autocmd("LspAttach", {
