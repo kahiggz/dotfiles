@@ -1,166 +1,318 @@
 return {
-  -- Mason setup
+  -- Mason setup for managing LSP servers, DAP servers, linters, and formatters
   {
-    "williamboman/mason.nvim",
+    "mason-org/mason.nvim",
     cmd = "Mason",
     keys = { { "<leader>cm", "<cmd>Mason<cr>", desc = "Mason" } },
     build = ":MasonUpdate",
     opts = {
-      ensure_installed = {
-        "lua-language-server",
-        "stylua",
-        "angular-language-server",
-        "typescript-language-server",
-        "css-lsp",
-        "html-lsp",
-        "eslint-lsp",
-        "prettier",
+      ui = {
+        icons = {
+          package_installed = "✓",
+          package_pending = "➜",
+          package_uninstalled = "✗",
+        },
       },
     },
-    config = true,
   },
 
-  -- Mason-lspconfig setup
+  -- Bridge between mason and lspconfig
   {
-    "williamboman/mason-lspconfig.nvim",
+    "mason-org/mason-lspconfig.nvim",
     dependencies = {
-      "williamboman/mason.nvim",
-      "neovim/nvim-lspconfig",
+      "mason-org/mason.nvim",
     },
-    config = true,
+    opts = {
+      -- Automatically install these servers
+      ensure_installed = {
+        "lua_ls",    -- Lua language server
+        "angularls", -- Angular language server
+        "ts_ls",     -- TypeScript language server (replaces tsserver)
+        "cssls",     -- CSS language server
+        "html",      -- HTML language server
+        "eslint",    -- ESLint language server
+        "jsonls",    -- JSON language server
+        -- "emmet_ls", -- Emmet for HTML/CSS
+      },
+      -- Automatically enable installed servers
+      automatic_installation = true,
+    },
+  },
+
+  -- Additional tool installer for formatters, linters, etc.
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    dependencies = { "mason-org/mason.nvim" },
+    opts = {
+      ensure_installed = {
+        "stylua",   -- Lua formatter
+        "prettier", -- Multi-language formatter
+        "eslint_d", -- Fast ESLint daemon
+      },
+      auto_update = false,
+      run_on_start = true,
+    },
   },
 
   -- LSP configuration
   {
     "neovim/nvim-lspconfig",
+    event = { "BufReadPre", "BufNewFile" },
     dependencies = {
-      { "williamboman/mason.nvim" },
-      { "williamboman/mason-lspconfig.nvim" },
-      { "hrsh7th/cmp-nvim-lsp" },
+      "mason-org/mason.nvim",
+      "mason-org/mason-lspconfig.nvim",
+      "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
-      -- Disable preview window in completion
-      vim.opt.completeopt = { "menu", "menuone", "noselect" }
+      -- Import lspconfig plugin
+      local lspconfig = require("lspconfig")
 
-      -- Override default definition handler to prevent preview window
-      vim.lsp.handlers["textDocument/definition"] = function(_, result)
-        if not result or vim.tbl_isempty(result) then
-          return nil
+      -- Get completion capabilities
+      local cmp_nvim_lsp_ok, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      if cmp_nvim_lsp_ok then
+        capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
+      end
+
+      -- Improved diagnostic configuration
+      vim.diagnostic.config({
+        virtual_text = {
+          prefix = "●",
+          source = "if_many",
+        },
+        signs = true,
+        underline = true,
+        update_in_insert = false,
+        severity_sort = true,
+        float = {
+          focusable = false,
+          style = "minimal",
+          border = "rounded",
+          source = "always",
+          header = "",
+          prefix = "",
+        },
+      })
+
+      -- Configure diagnostic signs
+      local signs = { Error = " ", Warn = " ", Hint = "󰠠 ", Info = " " }
+      for type, icon in pairs(signs) do
+        local hl = "DiagnosticSign" .. type
+        vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
+      end
+
+      -- Enhanced LSP handlers
+      vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
+        border = "rounded",
+      })
+
+      vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
+        border = "rounded",
+      })
+
+      -- Custom on_attach function for keymaps and options
+      local on_attach = function(client, bufnr)
+        local opts = { buffer = bufnr, silent = true }
+
+        -- Set keymaps (fallback to built-in LSP if Telescope not available)
+        local telescope_ok = pcall(require, "telescope.builtin")
+
+        if telescope_ok then
+          vim.keymap.set("n", "gR", "<cmd>Telescope lsp_references<CR>", opts)
+          vim.keymap.set("n", "gd", "<cmd>Telescope lsp_definitions<CR>", opts)
+          vim.keymap.set("n", "gi", "<cmd>Telescope lsp_implementations<CR>", opts)
+          vim.keymap.set("n", "gt", "<cmd>Telescope lsp_type_definitions<CR>", opts)
+          vim.keymap.set("n", "<leader>D", "<cmd>Telescope diagnostics bufnr=0<CR>", opts)
+        else
+          vim.keymap.set("n", "gR", vim.lsp.buf.references, opts)
+          vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+          vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
+          vim.keymap.set("n", "gt", vim.lsp.buf.type_definition, opts)
+          vim.keymap.set("n", "<leader>D", vim.diagnostic.setloclist, opts)
         end
 
-        if vim.tbl_islist(result) then
-          -- Multiple results, use first one
-          local uri = result[1].uri or result[1].targetUri
-          local range = result[1].range or result[1].targetSelectionRange
+        vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+        vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
+        vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
+        vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts)
+        vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
+        vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
+        vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+        vim.keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts)
 
-          local target_filename = vim.uri_to_fname(uri)
-          vim.cmd("edit " .. vim.fn.fnameescape(target_filename))
-          vim.api.nvim_win_set_cursor(0, {
-            range.start.line + 1,
-            range.start.character,
-          })
-        else
-          -- Single result
-          local uri = result.uri or result.targetUri
-          local range = result.range or result.targetSelectionRange
-
-          local target_filename = vim.uri_to_fname(uri)
-          vim.cmd("edit " .. vim.fn.fnameescape(target_filename))
-          vim.api.nvim_win_set_cursor(0, {
-            range.start.line + 1,
-            range.start.character,
+        -- Format on save for specific filetypes
+        if client.supports_method("textDocument/formatting") then
+          local format_group = vim.api.nvim_create_augroup("LspFormat", { clear = false })
+          vim.api.nvim_create_autocmd("BufWritePre", {
+            buffer = bufnr,
+            group = format_group,
+            callback = function()
+              vim.lsp.buf.format({ bufnr = bufnr })
+            end,
           })
         end
       end
 
-      -- Use standard capabilities
-      local capabilities = vim.lsp.protocol.make_client_capabilities()
-
-      local lspconfig = require("lspconfig")
-
-      -- Setup the servers directly
-      lspconfig.lua_ls.setup({
-        capabilities = capabilities,
-        settings = {
-          Lua = {
-            diagnostics = {
-              globals = { "vim" },
+      -- Server configurations
+      local server_configs = {
+        lua_ls = {
+          settings = {
+            Lua = {
+              -- Make the language server recognize "vim" global
+              diagnostics = {
+                globals = { "vim" },
+              },
+              completion = {
+                callSnippet = "Replace",
+              },
+              workspace = {
+                -- Make language server aware of runtime files
+                library = {
+                  [vim.fn.expand("$VIMRUNTIME/lua")] = true,
+                  [vim.fn.stdpath("config") .. "/lua"] = true,
+                },
+              },
             },
           },
         },
-      })
 
-      lspconfig.angularls.setup({
-        capabilities = capabilities,
-        root_dir = lspconfig.util.root_pattern("angular.json", "project.json"),
-      })
-
-      lspconfig.tsserver.setup({
-        capabilities = capabilities,
-        filetypes = { "typescript", "typescriptreact", "typescript.tsx" },
-        root_dir = lspconfig.util.root_pattern("tsconfig.json", "package.json"),
-      })
-
-      lspconfig.cssls.setup({
-        capabilities = capabilities,
-        filetypes = { "css", "scss", "less" },
-      })
-
-      lspconfig.eslint.setup({
-        capabilities = capabilities,
-        filetypes = {
-          "javascript",
-          "javascriptreact",
-          "javascript.jsx",
-          "typescript",
-          "typescriptreact",
-          "typescript.tsx",
-          "vue",
-          "html",
-        },
-        settings = {
-          codeAction = {
-            disableRuleComment = {
-              enable = true,
-              location = "separateLine",
+        ts_ls = {
+          settings = {
+            typescript = {
+              inlayHints = {
+                includeInlayParameterNameHints = "literal",
+                includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+                includeInlayFunctionParameterTypeHints = true,
+                includeInlayVariableTypeHints = false,
+                includeInlayPropertyDeclarationTypeHints = true,
+                includeInlayFunctionLikeReturnTypeHints = true,
+                includeInlayEnumMemberValueHints = true,
+              },
             },
-            showDocumentation = {
-              enable = true,
+            javascript = {
+              inlayHints = {
+                includeInlayParameterNameHints = "all",
+                includeInlayParameterNameHintsWhenArgumentMatchesName = false,
+                includeInlayFunctionParameterTypeHints = true,
+                includeInlayVariableTypeHints = true,
+                includeInlayPropertyDeclarationTypeHints = true,
+                includeInlayFunctionLikeReturnTypeHints = true,
+                includeInlayEnumMemberValueHints = true,
+              },
             },
           },
-          format = true,
-          onIgnoredFiles = "off",
-          problems = {
-            shortenToSingleLine = false,
-          },
-          run = "onType",
-          validate = "on",
         },
-      })
 
-      -- Setup key mappings for LSP functions
+        angularls = {
+          root_dir = lspconfig.util.root_pattern("angular.json", "project.json", "nx.json"),
+        },
+
+        cssls = {
+          settings = {
+            css = {
+              validate = true,
+              lint = {
+                unknownAtRules = "ignore",
+              },
+            },
+            scss = {
+              validate = true,
+              lint = {
+                unknownAtRules = "ignore",
+              },
+            },
+            less = {
+              validate = true,
+              lint = {
+                unknownAtRules = "ignore",
+              },
+            },
+          },
+        },
+
+        html = {
+          filetypes = { "html", "templ" },
+        },
+
+        jsonls = {
+          settings = {
+            json = {
+              validate = { enable = true },
+            },
+          },
+        },
+
+        eslint = {
+          settings = {
+            workingDirectories = { mode = "auto" },
+          },
+        },
+
+        -- emmet_ls = {
+        --   filetypes = {
+        --     "html",
+        --     "htmldjango",
+        --     "css",
+        --     "sass",
+        --     "scss",
+        --     "less",
+        --     "javascript",
+        --     "typescript",
+        --     "javascriptreact",
+        --     "typescriptreact",
+        --     "vue",
+        --     "svelte",
+        --   },
+        -- },
+      }
+
+      -- Setup each server individually
+      local servers_to_setup = {
+        "lua_ls",
+        "ts_ls",
+        "angularls",
+        "cssls",
+        "html",
+        "jsonls",
+        "eslint",
+        -- "emmet_ls",
+      }
+
+      for _, server_name in ipairs(servers_to_setup) do
+        local server_config = server_configs[server_name] or {}
+        server_config.capabilities = capabilities
+        server_config.on_attach = on_attach
+
+        lspconfig[server_name].setup(server_config)
+      end
+
+      -- Set up LspAttach autocommand for additional functionality
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("UserLspConfig", {}),
         callback = function(ev)
           -- Enable completion triggered by <c-x><c-o>
           vim.bo[ev.buf].omnifunc = "v:lua.vim.lsp.omnifunc"
-
-          -- Buffer local mappings
-          local opts = { buffer = ev.buf }
-          vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-          vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
-          vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
-          vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
-          vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
-          vim.keymap.set("n", "<space>rn", vim.lsp.buf.rename, opts)
-          vim.keymap.set({ "n", "v" }, "<space>ca", vim.lsp.buf.code_action, opts)
-          -- Additional useful mappings
-          vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, opts)
-          vim.keymap.set("n", "]d", vim.diagnostic.goto_next, opts)
-          vim.keymap.set("n", "<space>f", function()
-            vim.lsp.buf.format({ async = true })
-          end, opts)
         end,
+      })
+    end,
+  },
+
+  -- Enhanced schema support for JSON files (optional)
+  {
+    "b0o/schemastore.nvim",
+    ft = { "json", "jsonc" },
+    config = function()
+      -- This will be used by jsonls if available
+      local lspconfig = require("lspconfig")
+      local schemastore = require("schemastore")
+
+      lspconfig.jsonls.setup({
+        settings = {
+          json = {
+            schemas = schemastore.json.schemas(),
+            validate = { enable = true },
+          },
+        },
       })
     end,
   },
